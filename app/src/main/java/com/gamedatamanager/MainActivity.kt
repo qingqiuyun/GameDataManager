@@ -63,13 +63,20 @@ class MainActivity : ComponentActivity() {
     // Shizuku 权限请求
     private val shizukuPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
-    ) {
+    ) { result ->
         // Shizuku 权限请求后，检查权限状态
         val hasShizuku = checkShizukuPermission()
-        android.util.Log.d("MainActivity", "Shizuku permission: $hasShizuku")
+        android.util.Log.d("MainActivity", "Shizuku permission request result: $hasShizuku")
+        android.util.Log.d("MainActivity", "Shizuku permission result code: ${result.resultCode}")
         
         if (hasShizuku) {
-            android.util.Log.d("MainActivity", "Shizuku permission granted")
+            android.util.Log.d("MainActivity", "Shizuku permission granted successfully")
+            // 权限已授予，扫描应用
+            viewModel.scanGameApps()
+        } else {
+            android.util.Log.w("MainActivity", "Shizuku permission denied or not available")
+            // 即使没有 Shizuku 权限，也应该扫描应用
+            viewModel.scanGameApps()
         }
     }
 
@@ -198,7 +205,26 @@ class MainActivity : ComponentActivity() {
             
             // 检查 Shizuku 是否已安装
             val packageManager = packageManager
-            packageManager.getPackageInfo(shizukuPackage, 0)
+            val shizukuInstalled = try {
+                packageManager.getPackageInfo(shizukuPackage, 0)
+                true
+            } catch (e: PackageManager.NameNotFoundException) {
+                false
+            }
+            
+            if (!shizukuInstalled) {
+                // Shizuku 未安装，提示用户安装
+                android.util.Log.w("MainActivity", "Shizuku not installed")
+                showShizukuNotInstalledDialog()
+                return
+            }
+            
+            // 检查是否已有权限
+            if (checkShizukuPermission()) {
+                android.util.Log.d("MainActivity", "Shizuku permission already granted")
+                viewModel.scanGameApps()
+                return
+            }
             
             // Shizuku 已安装，请求权限
             val intent = Intent().apply {
@@ -207,14 +233,18 @@ class MainActivity : ComponentActivity() {
                 putExtra("moe.shizuku.manager.intent.extra.EXTRA_APPLICATION_ID", packageName)
             }
             
-            shizukuPermissionLauncher.launch(intent)
-            android.util.Log.d("MainActivity", "Requesting Shizuku permission")
-        } catch (e: PackageManager.NameNotFoundException) {
-            // Shizuku 未安装，提示用户安装
-            android.util.Log.w("MainActivity", "Shizuku not installed")
-            showShizukuNotInstalledDialog()
+            // 检查是否有应用可以处理这个 Intent
+            if (intent.resolveActivity(packageManager) != null) {
+                shizukuPermissionLauncher.launch(intent)
+                android.util.Log.d("MainActivity", "Requesting Shizuku permission")
+            } else {
+                android.util.Log.w("MainActivity", "No activity found to handle Shizuku permission request")
+                showShizukuNotInstalledDialog()
+            }
         } catch (e: Exception) {
             android.util.Log.e("MainActivity", "Failed to request Shizuku permission", e)
+            // 即使失败，也继续扫描应用
+            viewModel.scanGameApps()
         }
     }
 
@@ -222,8 +252,11 @@ class MainActivity : ComponentActivity() {
      * 显示 Shizuku 未安装对话框
      */
     private fun showShizukuNotInstalledDialog() {
-        // 可以在 UI 中显示提示
         android.util.Log.d("MainActivity", "Shizuku not installed. Please install Shizuku from F-Droid or GitHub.")
+        android.util.Log.d("MainActivity", "Shizuku download: https://github.com/RikkaApps/Shizuku/releases")
+        // 可以在 UI 中显示提示，这里暂时使用日志
+        // 继续扫描应用，即使没有 Shizuku
+        viewModel.scanGameApps()
     }
 
     /**

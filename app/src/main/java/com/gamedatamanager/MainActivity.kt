@@ -43,8 +43,8 @@ class MainActivity : ComponentActivity() {
     ) { permissions ->
         val allGranted = permissions.values.all { it }
         if (allGranted) {
-            // 权限已授予，扫描应用
-            viewModel.scanGameApps()
+            // 权限已授予，请求 Shizuku 权限
+            requestShizukuPermission()
         }
     }
 
@@ -54,9 +54,22 @@ class MainActivity : ComponentActivity() {
     ) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             if (Environment.isExternalStorageManager()) {
-                // 权限已授予
-                viewModel.scanGameApps()
+                // 权限已授予，请求 Shizuku 权限
+                requestShizukuPermission()
             }
+        }
+    }
+
+    // Shizuku 权限请求
+    private val shizukuPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) {
+        // Shizuku 权限请求后，检查权限状态
+        val hasShizuku = checkShizukuPermission()
+        android.util.Log.d("MainActivity", "Shizuku permission: $hasShizuku")
+        
+        if (hasShizuku) {
+            android.util.Log.d("MainActivity", "Shizuku permission granted")
         }
     }
 
@@ -99,6 +112,12 @@ class MainActivity : ComponentActivity() {
                     val hasPermission by remember { mutableStateOf(checkPermissions()) }
 
                     if (hasPermission) {
+                        // 有存储权限，请求 Shizuku 权限
+                        LaunchedEffect(Unit) {
+                            if (!checkShizukuPermission()) {
+                                requestShizukuPermission()
+                            }
+                        }
                         MainScreen(viewModel = viewModel)
                     } else {
                         PermissionRequestScreen(
@@ -149,6 +168,62 @@ class MainActivity : ComponentActivity() {
         if (isServiceBound) {
             unbindService(serviceConnection)
         }
+    }
+
+    /**
+     * 检查 Shizuku 权限
+     */
+    private fun checkShizukuPermission(): Boolean {
+        return try {
+            val shizukuPackage = "moe.shizuku.privileged.api"
+            val shizukuPermission = "moe.shizuku.manager.permission.API_V23"
+            
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                context.checkSelfPermission(shizukuPermission) == PackageManager.PERMISSION_GRANTED
+            } else {
+                false
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("MainActivity", "Failed to check Shizuku permission", e)
+            false
+        }
+    }
+
+    /**
+     * 请求 Shizuku 权限
+     */
+    private fun requestShizukuPermission() {
+        try {
+            val shizukuPackage = "moe.shizuku.privileged.api"
+            
+            // 检查 Shizuku 是否已安装
+            val packageManager = packageManager
+            packageManager.getPackageInfo(shizukuPackage, 0)
+            
+            // Shizuku 已安装，请求权限
+            val intent = Intent().apply {
+                action = "moe.shizuku.manager.intent.action.REQUEST_PERMISSION"
+                setPackage(shizukuPackage)
+                putExtra("moe.shizuku.manager.intent.extra.EXTRA_APPLICATION_ID", packageName)
+            }
+            
+            shizukuPermissionLauncher.launch(intent)
+            android.util.Log.d("MainActivity", "Requesting Shizuku permission")
+        } catch (e: PackageManager.NameNotFoundException) {
+            // Shizuku 未安装，提示用户安装
+            android.util.Log.w("MainActivity", "Shizuku not installed")
+            showShizukuNotInstalledDialog()
+        } catch (e: Exception) {
+            android.util.Log.e("MainActivity", "Failed to request Shizuku permission", e)
+        }
+    }
+
+    /**
+     * 显示 Shizuku 未安装对话框
+     */
+    private fun showShizukuNotInstalledDialog() {
+        // 可以在 UI 中显示提示
+        android.util.Log.d("MainActivity", "Shizuku not installed. Please install Shizuku from F-Droid or GitHub.")
     }
 
     /**

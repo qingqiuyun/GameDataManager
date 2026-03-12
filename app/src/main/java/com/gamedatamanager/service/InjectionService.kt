@@ -216,20 +216,17 @@ class InjectionService : Service() {
      */
     fun getAvailableMethods(): List<InjectionMethod> {
         val methods = mutableListOf<InjectionMethod>()
-        
-        if (runCatching { injectionManager.hasRootPermission() }.getOrNull() == true) {
-            methods.add(InjectionMethod.PTRACE)
-        }
-        
+
+        // 检查是否有 Shizuku 权限
         if (injectionManager.hasShizukuPermission()) {
             methods.add(InjectionMethod.SHIZUKU)
         }
-        
+
         // 添加 rish.sh 选项
         if (injectionManager.isRishAvailable()) {
             methods.add(InjectionMethod.SHIZUKU)
         }
-        
+
         return methods
     }
 

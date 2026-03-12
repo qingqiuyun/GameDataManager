@@ -26,6 +26,7 @@ import com.gamedatamanager.service.InjectionService
 import com.gamedatamanager.ui.theme.GameDataManagerTheme
 import com.gamedatamanager.viewmodel.MainViewModel
 import com.gamedatamanager.ui.screens.MainScreen
+import com.gamedatamanager.ui.screens.PermissionRequestScreen
 
 /**
  * 主 Activity

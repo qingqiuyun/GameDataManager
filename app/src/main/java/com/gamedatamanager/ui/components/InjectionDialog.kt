@@ -57,7 +57,7 @@ fun InjectionDialog(
                 isBound = true
                 
                 // 获取可用的注入方法
-                availableMethods = injectionService?.getAvailableMethods() ?: emptyList
+                availableMethods = injectionService?.getAvailableMethods() ?: emptyList<InjectionMethod>()
                 
                 // 检查应用是否已注入
                 if (injectionService?.isInjected(packageName) == true) {

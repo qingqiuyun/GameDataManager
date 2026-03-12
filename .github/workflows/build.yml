@@ -24,8 +24,22 @@ jobs:
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
 
+    - name: Check project structure
+      run: |
+        echo "=== Project structure ==="
+        ls -la
+        echo ""
+        echo "=== App directory ==="
+        ls -la app/
+        echo ""
+        echo "=== Build files ==="
+        ls -la app/build.gradle.kts
+        echo ""
+        echo "=== Gradle wrapper ==="
+        ls -la gradle/wrapper/
+
     - name: Build with Gradle
-      run: ./gradlew assembleDebug --no-daemon
+      run: ./gradlew assembleDebug --no-daemon --stacktrace --info
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
@@ -33,3 +47,14 @@ jobs:
         name: app-debug
         path: app/build/outputs/apk/debug/app-debug.apk
         retention-days: 30
+      if: success()
+
+    - name: Upload build logs
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-logs
+        path: |
+          app/build/reports/
+          build/reports/
+        retention-days: 7
+      if: always()

@@ -21,34 +21,45 @@ class AppScanner(private val context: Context) {
      * 获取所有已安装的应用
      */
     suspend fun getAllApps(): List<AppInfo> = withContext(Dispatchers.IO) {
-        val packages = packageManager.getInstalledApplications(PackageManager.GET_META_DATA)
-        packages.mapNotNull { appInfo ->
-            try {
-                val packageName = appInfo.packageName
-                val appName = packageManager.getApplicationLabel(appInfo).toString()
-                val icon = packageManager.getApplicationIcon(appInfo)
-                val versionInfo = packageManager.getPackageInfo(packageName, 0)
-                val versionName = versionInfo.versionName ?: "Unknown"
+        try {
+            val packages = packageManager.getInstalledApplications(PackageManager.GET_META_DATA)
+            android.util.Log.d("AppScanner", "Found ${packages.size} applications")
+            
+            val appList = packages.mapNotNull { appInfo ->
+                try {
+                    val packageName = appInfo.packageName
+                    val appName = packageManager.getApplicationLabel(appInfo).toString()
+                    val icon = packageManager.getApplicationIcon(appInfo)
+                    val versionInfo = packageManager.getPackageInfo(packageName, 0)
+                    val versionName = versionInfo.versionName ?: "Unknown"
 
-                // 判断是否为游戏
-                val isGame = isGameApp(appInfo)
+                    // 判断是否为游戏
+                    val isGame = isGameApp(appInfo)
 
-                // 检查数据目录是否存在
-                val hasPrivateData = checkPrivateDataExists(packageName)
-                val hasPublicData = checkPublicDataExists(packageName)
+                    // 检查数据目录是否存在
+                    val hasPrivateData = checkPrivateDataExists(packageName)
+                    val hasPublicData = checkPublicDataExists(packageName)
 
-                AppInfo(
-                    packageName = packageName,
-                    appName = appName,
-                    icon = icon,
-                    versionName = versionName,
-                    isGame = isGame,
-                    hasPrivateData = hasPrivateData,
-                    hasPublicData = hasPublicData
-                )
-            } catch (e: Exception) {
-                null
+                    AppInfo(
+                        packageName = packageName,
+                        appName = appName,
+                        icon = icon,
+                        versionName = versionName,
+                        isGame = isGame,
+                        hasPrivateData = hasPrivateData,
+                        hasPublicData = hasPublicData
+                    )
+                } catch (e: Exception) {
+                    android.util.Log.w("AppScanner", "Failed to scan app: ${appInfo.packageName}", e)
+                    null
+                }
             }
+            
+            android.util.Log.d("AppScanner", "Successfully scanned ${appList.size} applications")
+            appList
+        } catch (e: Exception) {
+            android.util.Log.e("AppScanner", "Failed to get installed applications", e)
+            throw e
         }
     }
 

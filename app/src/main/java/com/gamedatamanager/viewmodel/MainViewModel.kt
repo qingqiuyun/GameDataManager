@@ -79,6 +79,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             try {
                 val apps = appScanner.getAllApps()
                 _appList.value = apps
+                _uiState.value = _uiState.value.copy(isLoading = false)
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
@@ -97,6 +98,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             try {
                 val apps = appScanner.getGameApps()
                 _appList.value = apps
+                _uiState.value = _uiState.value.copy(isLoading = false)
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
@@ -115,6 +117,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             try {
                 val apps = appScanner.searchApps(query)
                 _appList.value = apps
+                _uiState.value = _uiState.value.copy(isLoading = false)
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,

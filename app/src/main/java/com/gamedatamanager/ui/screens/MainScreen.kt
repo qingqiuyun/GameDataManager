@@ -8,6 +8,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -24,11 +25,18 @@ fun MainScreen(
     val uiState by viewModel.uiState.collectAsState()
     val appList by viewModel.appList.collectAsState()
     val selectedApp by viewModel.selectedApp.collectAsState()
+    val injectedApps by viewModel.injectedApps.collectAsState()
 
     var searchQuery by remember { mutableStateOf("") }
     var showInjectionDialog by remember { mutableStateOf(false) }
     var selectedAppForInjection by remember { mutableStateOf<AppInfo?>(null) }
-    var injectedApps by remember { mutableStateOf<Set<String>>(emptySet()) }
+
+    // 自动扫描游戏应用
+    LaunchedEffect(Unit) {
+        if (appList.isEmpty()) {
+            viewModel.scanGameApps()
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -116,7 +124,6 @@ fun MainScreen(
             appName = selectedAppForInjection!!.appName,
             onDismiss = { showInjectionDialog = false },
             onInjectionSuccess = {
-                injectedApps = injectedApps + selectedAppForInjection!!.packageName
                 showInjectionDialog = false
             }
         )

@@ -123,28 +123,21 @@ class MainActivity : ComponentActivity() {
                 return
             }
 
-            // 从应用内部存储复制rish文件
-            val internalRishScript = java.io.File("/data/data/com.termux/files/home/rish.sh")
-            val internalRishDex = java.io.File("/data/data/com.termux/files/home/rish_shizuku.dex")
-
-            if (internalRishScript.exists() && internalRishDex.exists()) {
-                // 复制rish.sh
-                java.io.FileInputStream(internalRishScript).use { input ->
-                    java.io.FileOutputStream(rishScript).use { output ->
-                        input.copyTo(output)
-                    }
+            // 从 assets 复制 rish 文件
+            assets.open("rish.sh").use { input ->
+                java.io.FileOutputStream(rishScript).use { output ->
+                    input.copyTo(output)
                 }
-                rishScript.setExecutable(true)
-
-                // 复制rish_shizuku.dex
-                java.io.FileInputStream(internalRishDex).use { input ->
-                    java.io.FileOutputStream(rishDex).use { output ->
-                        input.copyTo(output)
-                    }
-                }
-
-                android.util.Log.d("MainActivity", "Rish files copied to external storage")
             }
+            rishScript.setExecutable(true)
+
+            assets.open("rish_shizuku.dex").use { input ->
+                java.io.FileOutputStream(rishDex).use { output ->
+                    input.copyTo(output)
+                }
+            }
+
+            android.util.Log.d("MainActivity", "Rish files copied to external storage")
         } catch (e: Exception) {
             android.util.Log.e("MainActivity", "Failed to copy rish files", e)
         }

@@ -58,9 +58,8 @@
             android:name=".provider.GameDataFileProvider"
             android:authorities="com.gamedatamanager.provider"
             android:enabled="true"
-            android:exported="true"
-            android:permission="android.permission.MANAGE_DOCUMENTS"
-            tools:ignore="ExportedContentProvider" />
+            android:exported="false"
+            android:permission="android.permission.MANAGE_DOCUMENTS" />
 
     </application>
 
